@@ -76,6 +76,7 @@ private:
   float _nu_vtx_x; ///< Neutrino vertex X
   float _nu_vtx_y; ///< Neutrino vertex Y
   float _nu_vtx_z; ///< Neutrino vertex Z
+  float _nu_vtx_t; ///< Neutrino vertex T
   float _nu_px; ///< Neutrino momentum along X
   float _nu_py; ///< Neutrino momentum along Y
   float _nu_pz; ///< Neutrino momentum along Z
@@ -139,9 +140,10 @@ PrismAnalyzer::PrismAnalyzer(fhicl::ParameterSet const& p)
   _tree->Branch("nu_vtx_x", &_nu_vtx_x, "nu_vtx_x/F");
   _tree->Branch("nu_vtx_y", &_nu_vtx_y, "nu_vtx_y/F");
   _tree->Branch("nu_vtx_z", &_nu_vtx_z, "nu_vtx_z/F");
+  _tree->Branch("nu_vtx_t", &_nu_vtx_t, "nu_vtx_t/F");
   _tree->Branch("nu_px", &_nu_px, "nu_px/F");
-  _tree->Branch("nu_py", &_nu_py, "nu_px/F");
-  _tree->Branch("nu_pz", &_nu_pz, "nu_px/F");
+  _tree->Branch("nu_py", &_nu_py, "nu_py/F");
+  _tree->Branch("nu_pz", &_nu_pz, "nu_pz/F");
   _tree->Branch("nu_oaa", &_nu_oaa, "nu_oaa/F");
   _tree->Branch("nu_roaa", &_nu_roaa, "nu_roaa/F");
   _tree->Branch("nu_l", &_nu_l, "nu_l/F");
@@ -222,6 +224,7 @@ void PrismAnalyzer::analyze(art::Event const& e)
     _nu_vtx_x = mct_v[i]->GetNeutrino().Nu().Vx();
     _nu_vtx_y = mct_v[i]->GetNeutrino().Nu().Vy();
     _nu_vtx_z = mct_v[i]->GetNeutrino().Nu().Vz();
+    _nu_vtx_t = mct_v[i]->GetNeutrino().Nu().T();
     _nu_px = mct_v[i]->GetNeutrino().Nu().Px();
     _nu_py = mct_v[i]->GetNeutrino().Nu().Py();
     _nu_pz = mct_v[i]->GetNeutrino().Nu().Pz();
