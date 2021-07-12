@@ -67,7 +67,8 @@ private:
   TTree* _tree;
 
   int _run, _subrun, _event;
-
+  
+  //trial
   float _nu_e; ///< Neutrino energy
   int _nu_pdg; ///< Neutrino PDG code
   int _nu_ccnc; ///< 0: CC, 1: NC
