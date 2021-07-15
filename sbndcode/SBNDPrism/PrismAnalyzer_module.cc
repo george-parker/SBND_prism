@@ -85,10 +85,23 @@ private:
   float _nu_roaa; ///< Real Off-Axis Angle (angle between neutrino parent p and neutrino p)
   float _nu_l; ///< L [cm]: Distance the neutrino travelled from production to interaction point
   int _nu_decay; ///< Neutrino parent decay type (see dkproc_t in dk2nu)
+ 
   float _nu_lepton_e; ///< Final state lepton energy
   float _nu_lepton_px; ///< Final state lepton px
   float _nu_lepton_py; ///< Final state lepton py
   float _nu_lepton_pz; ///< Final state lepton pz
+
+  float _nu_electron_e; ///< Final state electron energy
+  float _nu_electron_px; ///< Final state electron px
+  float _nu_electron_py; ///< Final state electron py
+  float _nu_electron_pz; ///< Final state electron pz
+
+  float _nu_positron_e; ///< Final state positron energy
+  float _nu_positron_px; ///< Final state positron px
+  float _nu_positron_py; ///< Final state positron py
+  float _nu_positron_pz; ///< Final state positron pz
+
+
   float _nu_e_reco; ///< Neutrino reconstructe energy using QE formula
   std::vector<long int> _pars_pdg; ///< All other particles produced - pdg code
   std::vector<float> _pars_e; ///< All other particles produced - energy
@@ -153,6 +166,17 @@ PrismAnalyzer::PrismAnalyzer(fhicl::ParameterSet const& p)
   _tree->Branch("nu_lepton_px", &_nu_lepton_px, "nu_lepton_px/F");
   _tree->Branch("nu_lepton_py", &_nu_lepton_py, "nu_lepton_py/F");
   _tree->Branch("nu_lepton_pz", &_nu_lepton_pz, "nu_lepton_pz/F");
+
+  _tree->Branch("nu_electron_e", &_nu_electron_e, "nu_electron_e/F");
+  _tree->Branch("nu_electron_px", &_nu_electron_px, "nu_electron_px/F");
+  _tree->Branch("nu_electron_py", &_nu_electron_py, "nu_electron_py/F");
+  _tree->Branch("nu_electron_pz", &_nu_electron_pz, "nu_electron_pz/F");
+
+  _tree->Branch("nu_positron_e", &_nu_positron_e, "nu_positron_e/F");
+  _tree->Branch("nu_positron_px", &_nu_positron_px, "nu_positron_px/F");
+  _tree->Branch("nu_positron_py", &_nu_positron_py, "nu_positron_py/F");
+  _tree->Branch("nu_positron_pz", &_nu_positron_pz, "nu_positron_pz/F");
+
   _tree->Branch("nu_e_reco", &_nu_e_reco, "nu_e_reco/F");
 
   _tree->Branch("nu_prod_vtx_x", &_nu_prod_vtx_x, "nu_prod_vtx_x/F");
@@ -287,6 +311,21 @@ void PrismAnalyzer::analyze(art::Event const& e)
         _nu_lepton_py = mcp.Py();
         _nu_lepton_pz = mcp.Pz();
         _nu_e_reco = GetEnergyQE(mcp.E(), mcp.Px(), mcp.Py(), mcp.Pz());
+
+	if (mcp.PdgCode()  == 11) {
+	  _nu_electron_e = mcp.E();
+	  _nu_electron_px = mcp.Px();
+	  _nu_electron_py = mcp.Py();
+	  _nu_electron_pz = mcp.Pz();
+        }
+
+        if (mcp.PdgCode()  == -11) {
+          _nu_positron_e = mcp.E();
+          _nu_positron_px = mcp.Px();
+          _nu_positron_py = mcp.Py();
+          _nu_positron_pz = mcp.Pz();
+        }
+	
       }
     }
 
