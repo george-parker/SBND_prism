@@ -70,7 +70,7 @@ private:
   
   //trial
   float _nu_e; ///< Neutrino energy
-  int _nu_pdg; ///< Neutrino PDG code
+  long int _nu_pdg; ///< Neutrino PDG code
   int _nu_ccnc; ///< 0: CC, 1: NC
   int _nu_mode; ///< Neutrino interaction mode
   int _nu_int_type; ///< Neutrino interaction type
@@ -90,7 +90,7 @@ private:
   float _nu_lepton_py; ///< Final state lepton py
   float _nu_lepton_pz; ///< Final state lepton pz
   float _nu_e_reco; ///< Neutrino reconstructe energy using QE formula
-  std::vector<int> _pars_pdg; ///< All other particles produced - pdg code
+  std::vector<long int> _pars_pdg; ///< All other particles produced - pdg code
   std::vector<float> _pars_e; ///< All other particles produced - energy
 
   float _nu_prod_vtx_x; ///< Neutrino production vertex in detector coordinates
@@ -162,7 +162,7 @@ PrismAnalyzer::PrismAnalyzer(fhicl::ParameterSet const& p)
   _tree->Branch("nu_prod_vtx_y_beam", &_nu_prod_vtx_y_beam, "nu_prod_vtx_y_beam/F");
   _tree->Branch("nu_prod_vtx_z_beam", &_nu_prod_vtx_z_beam, "nu_prod_vtx_z_beam/F");
 
-  _tree->Branch("pars_pdg", "std::vector<int>", &_pars_pdg);
+  _tree->Branch("pars_pdg", "std::vector<long int>", &_pars_pdg);
   _tree->Branch("pars_e", "std::vector<float>", &_pars_e);
 
   _tree->Branch("p_type", &_p_type, "p_type/I");
