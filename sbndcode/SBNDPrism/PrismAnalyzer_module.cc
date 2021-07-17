@@ -101,6 +101,7 @@ private:
   float _nu_positron_py; ///< Final state positron py
   float _nu_positron_pz; ///< Final state positron pz
 
+  float _opening_angle;
 
   float _nu_e_reco; ///< Neutrino reconstructe energy using QE formula
   std::vector<long int> _pars_pdg; ///< All other particles produced - pdg code
@@ -166,6 +167,8 @@ PrismAnalyzer::PrismAnalyzer(fhicl::ParameterSet const& p)
   _tree->Branch("nu_lepton_px", &_nu_lepton_px, "nu_lepton_px/F");
   _tree->Branch("nu_lepton_py", &_nu_lepton_py, "nu_lepton_py/F");
   _tree->Branch("nu_lepton_pz", &_nu_lepton_pz, "nu_lepton_pz/F");
+
+  _tree->Branch("opening_angle", &_opening_angle, "opening_angle/F");
 
   _tree->Branch("nu_electron_e", &_nu_electron_e, "nu_electron_e/F");
   _tree->Branch("nu_electron_px", &_nu_electron_px, "nu_electron_px/F");
@@ -290,6 +293,19 @@ void PrismAnalyzer::analyze(art::Event const& e)
     _nu_lepton_pz = -9999;
     _nu_e_reco = -9999;
 
+    _nu_electron_e = -9999;
+    _nu_electron_px = -9999;
+    _nu_electron_py = -9999;
+    _nu_electron_pz = -9999;
+
+    _nu_positron_e = -9999;
+    _nu_positron_px = -9999;
+    _nu_positron_py = -9999;
+    _nu_positron_pz = -9999;
+
+    std::vector<long int> _positron;
+    std::vector<long int> _electron;
+
     for (int p = 0; p < mct_v[i]->NParticles(); p++) {
       auto const & mcp = mct_v[i]->GetParticle(p);
 
@@ -317,6 +333,7 @@ void PrismAnalyzer::analyze(art::Event const& e)
 	  _nu_electron_px = mcp.Px();
 	  _nu_electron_py = mcp.Py();
 	  _nu_electron_pz = mcp.Pz();
+	  _electron.push_back(p);
         }
 
         if (mcp.PdgCode()  == -11) {
@@ -324,9 +341,32 @@ void PrismAnalyzer::analyze(art::Event const& e)
           _nu_positron_px = mcp.Px();
           _nu_positron_py = mcp.Py();
           _nu_positron_pz = mcp.Pz();
+	  _positron.push_back(p);
         }
-	
       }
+
+      //for (int x = 0; x < (int)_electron.size(); x++) {
+      //auto const & mcp_e = mct_v[i]->GetParticle(_electron[x]);
+      //for (int y = 0; y < (int)_positron.size(); y++) {
+      // auto const & mcp_p = mct_v[i]->GetParticle(_positron[y]);
+      // if (mcp_e->Mother() == mcp_p->Mother()) {
+      // _nu_electron_e = mcp_e.E();
+      //_nu_positron_e = mcp_p.E();}}}
+    }
+
+    //auto const & mcp_e = mct_v[i]->GetParticle(_electron[i]);
+    //auto const & mcp_p = mct_v[i]->GetParticle(_positron[i]);
+
+    float px_a = _nu_electron_px;
+    float py_a = _nu_electron_py;
+    float pz_a = _nu_electron_pz;
+
+    float px_b = _nu_positron_px;
+    float py_b = _nu_positron_py;
+    float pz_b = _nu_positron_px;
+    
+    if ((_nu_electron_e != -9999) || (_nu_positron_e != -9999)){ 
+      _opening_angle = std::acos((px_a * px_b + py_a * py_b + pz_a * pz_b)/(std::sqrt(px_a * px_a + py_a * py_a + pz_a * pz_a)*std::sqrt(px_b * px_b + py_b * py_b + pz_b * pz_b)));
     }
 
     // _n_pi0 = 0;
