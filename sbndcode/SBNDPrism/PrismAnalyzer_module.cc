@@ -101,11 +101,29 @@ private:
   float _nu_positron_py; ///< Final state positron py
   float _nu_positron_pz; ///< Final state positron pz
 
-  float _opening_angle;
+  float _nu_photon1_e; ///< Final state photon energy
+  float _nu_photon1_px; ///< Final state photon px
+  float _nu_photon1_py; ///< Final state photon py
+  float _nu_photon1_pz; ///< Final state photon pz
+
+  float _nu_photon2_e; ///< Final state photon energy
+  float _nu_photon2_px; ///< Final state photon px
+  float _nu_photon2_py; ///< Final state photon py
+  float _nu_photon2_pz; ///< Final state photon pz
+
+  float _opening_angle; ///<Opening angle of electron-positron
 
   float _nu_e_reco; ///< Neutrino reconstructe energy using QE formula
   std::vector<long int> _pars_pdg; ///< All other particles produced - pdg code
   std::vector<float> _pars_e; ///< All other particles produced - energy
+
+  std::vector<long int> pdg_num; ///< particles produced - pdg code
+  std::vector<long int> pdg_count; ///<  particles produced - pdg count
+  std::vector<long int> pdg_row; ///< particles produced 
+  std::vector<long int> pdg_single; ///<  particles produced
+  std::vector<long int> pdg_double; ///< particles produced
+  std::vector<long int> pdg_other; ///<  particles produced
+  int counter;
 
   float _nu_prod_vtx_x; ///< Neutrino production vertex in detector coordinates
   float _nu_prod_vtx_y; ///< Neutrino production vertex in detector coordinates
@@ -122,6 +140,9 @@ private:
   int _nu_pip_mult; ///< Pi0 multiplicity
   int _nu_pi0_mult; ///< Pi plus multiplicity
   int _nu_p_mult; ///< Proton multiplicity
+  
+  int _lept_pairs;
+  int _phot_pairs;
 
   TTree* _sr_tree;
   int _sr_run, _sr_subrun;
@@ -135,6 +156,10 @@ PrismAnalyzer::PrismAnalyzer(fhicl::ParameterSet const& p)
   : EDAnalyzer{p}  // ,
   // More initializers here.
 {
+
+  _phot_pairs = 0;
+  _lept_pairs = 0;
+  counter = 0;
 
   _beam_origin_x = p.get<float>("BeamCenterX");
   _beam_origin_y = p.get<float>("BeamCenterY");
@@ -179,6 +204,16 @@ PrismAnalyzer::PrismAnalyzer(fhicl::ParameterSet const& p)
   _tree->Branch("nu_positron_px", &_nu_positron_px, "nu_positron_px/F");
   _tree->Branch("nu_positron_py", &_nu_positron_py, "nu_positron_py/F");
   _tree->Branch("nu_positron_pz", &_nu_positron_pz, "nu_positron_pz/F");
+
+  _tree->Branch("nu_photon1_e", &_nu_photon1_e, "nu_photon1_e/F");
+  _tree->Branch("nu_photon1_px", &_nu_photon1_px, "nu_photon1_px/F");
+  _tree->Branch("nu_photon1_py", &_nu_photon1_py, "nu_photon1_py/F");
+  _tree->Branch("nu_photon1_pz", &_nu_photon1_pz, "nu_photon1_pz/F");
+
+  _tree->Branch("nu_photon2_e", &_nu_photon2_e, "nu_photon2_e/F");
+  _tree->Branch("nu_photon2_px", &_nu_photon2_px, "nu_photon2_px/F");
+  _tree->Branch("nu_photon2_py", &_nu_photon2_py, "nu_photon2_py/F");
+  _tree->Branch("nu_photon2_pz", &_nu_photon2_pz, "nu_photon2_pz/F");
 
   _tree->Branch("nu_e_reco", &_nu_e_reco, "nu_e_reco/F");
 
@@ -232,9 +267,10 @@ void PrismAnalyzer::analyze(art::Event const& e)
   //
   art::FindManyP<simb::MCFlux> mct_to_mcf (mct_h, e, _mctruth_producer);
 
-  _pars_pdg.clear();
-  _pars_e.clear();
+  // _pars_pdg.clear();
+  //_pars_e.clear();
   _nu_pi0_mult = _nu_pip_mult = _nu_p_mult = 0;
+  //counter = 0;
 
   //
   // Loop over the neutrino interactions in this event
@@ -303,24 +339,103 @@ void PrismAnalyzer::analyze(art::Event const& e)
     _nu_positron_py = -9999;
     _nu_positron_pz = -9999;
 
-    std::vector<long int> _positron;
-    std::vector<long int> _electron;
+    _nu_photon1_e = -9999;
+    _nu_photon1_px = -9999;
+    _nu_photon1_py = -9999;
+    _nu_photon1_pz = -9999;
+
+    _nu_photon2_e = -9999;
+    _nu_photon2_px = -9999;
+    _nu_photon2_py = -9999;
+    _nu_photon2_pz = -9999;
+
+    float electron_e = -9999;
+    float electron_px = -9999;
+    float electron_py = -9999;
+    float electron_pz = -9999;
+
+    float positron_e = -9999;
+    float positron_px = -9999;
+    float positron_py = -9999;
+    float positron_pz = -9999;
+
+    float photon1_e = -9999;
+    float photon1_px = -9999;
+    float photon1_py = -9999;
+    float photon1_pz = -9999;
+
+    float photon2_e = -9999;
+    float photon2_px = -9999;
+    float photon2_py = -9999;
+    float photon2_pz = -9999;
+    
+    int _positron = 0;
+    int _electron = 0;
 
     for (int p = 0; p < mct_v[i]->NParticles(); p++) {
       auto const & mcp = mct_v[i]->GetParticle(p);
-
+      
       if (mcp.StatusCode() != 1) continue;
+
+      if (std::find(pdg_num.begin(), pdg_num.end(), mcp.PdgCode()) ==pdg_num.end()) {
+	// someName not in name, add it
+	pdg_num.push_back(mcp.PdgCode());
+	pdg_count.push_back(0);
+	pdg_row.push_back(0);
+	pdg_single.push_back(0);
+	pdg_double.push_back(0);
+	pdg_other.push_back(0);
+      }
+
+      //std::vector<long int>::iterator it = std::find(pdg_num.begin(), pdg_num.end(), mcp.PdgCode());       
+      //std::find(pdg_num.begin(), pdg_num.end(), mcp.PdgCode());
+      //std::cout << "The index is at:" << std::find(pdg_num.begin(), pdg_num.end(), mcp.PdgCode()) - pdg_num.begin() << std::endl;
+      pdg_count[std::find(pdg_num.begin(), pdg_num.end(), mcp.PdgCode()) - pdg_num.begin()]++;
+      pdg_row[std::find(pdg_num.begin(), pdg_num.end(), mcp.PdgCode()) - pdg_num.begin()]++;
+      //pdg_num.push_back(mcp.PdgCode());
 
       _pars_pdg.push_back(mcp.PdgCode());
       _pars_e.push_back(mcp.E());
 
       if (mcp.PdgCode() == 111) {
         _nu_pi0_mult++;
+	
       } else if (std::abs(mcp.PdgCode()) == 211) {
         _nu_pip_mult++;
       }
+      else if (mcp.PdgCode() == 22) {
+	//_phot_pairs++;
+	//std::cout << "Photon:" << _phot_pairs << std::endl;
+	
+        if (photon1_e == -9999) {
+	  photon1_e = mcp.E();
+          photon1_px = mcp.Px();
+	  photon1_py = mcp.Py();
+	  photon1_pz = mcp.Pz(); }
+	else {
+	  photon2_e = mcp.E();
+          photon2_px = mcp.Px();
+          photon2_py = mcp.Py();
+          photon2_pz = mcp.Pz(); 
+
+	  _nu_photon1_e = photon1_e;
+	  _nu_photon1_px = photon1_px;
+	  _nu_photon1_py = photon1_py;
+	  _nu_photon1_pz = photon1_pz;
+
+	  _nu_photon2_e = photon2_e;
+	  _nu_photon2_px = photon2_px;
+	  _nu_photon2_py = photon2_py;
+	  _nu_photon2_pz = photon2_pz;
+	  
+	  _phot_pairs++;
+	  //std::cout << "Photon pairs is:" << _phot_pairs << std::endl;
+	}
+      } 
+
+
       else if (std::abs(mcp.PdgCode()) == 2112) {
-        _nu_p_mult++;
+	_nu_p_mult++;
       } else if (std::abs(mcp.PdgCode()) == 13 || std::abs(mcp.PdgCode()) == 11) {
         _nu_lepton_e = mcp.E();
         _nu_lepton_px = mcp.Px();
@@ -329,19 +444,59 @@ void PrismAnalyzer::analyze(art::Event const& e)
         _nu_e_reco = GetEnergyQE(mcp.E(), mcp.Px(), mcp.Py(), mcp.Pz());
 
 	if (mcp.PdgCode()  == 11) {
-	  _nu_electron_e = mcp.E();
-	  _nu_electron_px = mcp.Px();
-	  _nu_electron_py = mcp.Py();
-	  _nu_electron_pz = mcp.Pz();
-	  _electron.push_back(p);
+	  _electron = 1;
+  
+	  electron_e = mcp.E();
+	  electron_px = mcp.Px();
+	  electron_py = mcp.Py();
+	  electron_pz = mcp.Pz();
+	  
+	  if (_positron == 1) {
+
+	    _nu_electron_e = electron_e;
+	    _nu_electron_px = electron_px;
+	    _nu_electron_py = electron_py;
+	    _nu_electron_pz = electron_pz;
+
+	    _nu_positron_e = positron_e;
+	    _nu_positron_px = positron_px;
+	    _nu_positron_py = positron_py;
+	    _nu_positron_pz = positron_pz;
+	    
+	    _lept_pairs++;
+	    //std::cout << "Number of positrons:" << _lept_pairs << std::endl;
+	    _opening_angle = std::acos((_nu_electron_px * _nu_positron_px + _nu_electron_py * _nu_positron_py + _nu_electron_pz * _nu_positron_pz)/(std::sqrt(_nu_electron_px * _nu_electron_px + _nu_electron_py * _nu_electron_py + _nu_electron_pz * _nu_electron_pz)*std::sqrt(_nu_positron_px * _nu_positron_px + _nu_positron_py * _nu_positron_py + _nu_positron_pz * _nu_positron_pz)));
+	  }
         }
 
         if (mcp.PdgCode()  == -11) {
-          _nu_positron_e = mcp.E();
-          _nu_positron_px = mcp.Px();
-          _nu_positron_py = mcp.Py();
-          _nu_positron_pz = mcp.Pz();
-	  _positron.push_back(p);
+	  _positron = 1;
+
+	  //std::cout << "Number of positrons:" << _lept_pairs << std::endl;
+
+          positron_e = mcp.E();
+          positron_px = mcp.Px();
+          positron_py = mcp.Py();
+          positron_pz = mcp.Pz();
+	  
+	  if (_electron == 1) {
+
+            _nu_electron_e = electron_e;
+            _nu_electron_px = electron_px;
+            _nu_electron_py = electron_py;
+            _nu_electron_pz = electron_pz;
+
+            _nu_positron_e = positron_e;
+            _nu_positron_px = positron_px;
+            _nu_positron_py = positron_py;
+            _nu_positron_pz = positron_pz;
+
+	    _lept_pairs++;
+	    //std::cout << "Number of e+e- pairs is:" << _lept_pairs << std::endl;
+	    _opening_angle = std::acos((_nu_electron_px * _nu_positron_px + _nu_electron_py * _nu_positron_py + _nu_electron_pz * _nu_positron_pz)/(std::sqrt(_nu_electron_px * _nu_electron_px + _nu_electron_py * _nu_electron_py + _nu_electron_pz * _nu_electron_pz)*std::sqrt(_nu_positron_px * _nu_positron_px + _nu_positron_py * _nu_positron_py + _nu_positron_pz * _nu_positron_pz)));
+
+          }
+	  //_positron.push_back(p);
         }
       }
 
@@ -353,21 +508,7 @@ void PrismAnalyzer::analyze(art::Event const& e)
       // _nu_electron_e = mcp_e.E();
       //_nu_positron_e = mcp_p.E();}}}
     }
-
-    //auto const & mcp_e = mct_v[i]->GetParticle(_electron[i]);
-    //auto const & mcp_p = mct_v[i]->GetParticle(_positron[i]);
-
-    float px_a = _nu_electron_px;
-    float py_a = _nu_electron_py;
-    float pz_a = _nu_electron_pz;
-
-    float px_b = _nu_positron_px;
-    float py_b = _nu_positron_py;
-    float pz_b = _nu_positron_px;
-    
-    if ((_nu_electron_e != -9999) || (_nu_positron_e != -9999)){ 
-      _opening_angle = std::acos((px_a * px_b + py_a * py_b + pz_a * pz_b)/(std::sqrt(px_a * px_a + py_a * py_a + pz_a * pz_a)*std::sqrt(px_b * px_b + py_b * py_b + pz_b * pz_b)));
-    }
+ 
 
     // _n_pi0 = 0;
     // for (int p = 0; p < mct_v[i]->NParticles(); p++) {
@@ -384,7 +525,29 @@ void PrismAnalyzer::analyze(art::Event const& e)
     // }
 
     _tree->Fill();
+
+    for(std::vector<long int>::size_type y=0; y<pdg_row.size(); ++y) {
+      if (pdg_row[y] == 1) {
+        pdg_single[y]++;}
+      else if (pdg_row[y] == 2) {
+	pdg_double[y]++;}
+      else if (pdg_row[y] > 2) {
+        pdg_other[y]++;}
+    }
+    counter += std::accumulate(pdg_row.begin(), pdg_row.end(), 0);
+    std::fill(pdg_row.begin(), pdg_row.end(), 0);
   }
+
+   std::ofstream myfile;
+   myfile.open("pdg.txt");
+   myfile << " " << "PDG:\t\t" << "Total:\t\t"  << "Single:\t\t" << "Double:\t\t" << "More: \n" ;
+   for(std::vector<long int>::size_type z=0; z<pdg_num.size(); ++z) {  
+     myfile << " " << pdg_num[z] << "\t\t:" << pdg_count[z] << "\t\t:" << pdg_single[z] << "\t\t:" << pdg_double[z] << "\t\t:" << pdg_other[z] << "\n" ;}
+   myfile << "\n" << "Total number of particles        :" << counter << "\n";;
+   myfile << "Total number of particles (check):" << std::accumulate(pdg_count.begin(), pdg_count.end(), 0) << "\n";;
+   myfile << "Total number of e+e- events      :" << _lept_pairs << "\n";;
+   myfile << "Total number of 2 photon events  :" << _phot_pairs << "\n";;
+   myfile.close();
 
   // art::Handle<std::vector<simb::MCParticle>> mcp_h;
   // e.getByLabel("largeant", mcp_h);
