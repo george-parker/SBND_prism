@@ -537,16 +537,25 @@ void PrismAnalyzer::analyze(art::Event const& e)
     counter += std::accumulate(pdg_row.begin(), pdg_row.end(), 0);
     std::fill(pdg_row.begin(), pdg_row.end(), 0);
   }
+  
+
+  TDatabasePDG *db   = TDatabasePDG::Instance();
 
    std::ofstream myfile;
    myfile.open("pdg.txt");
-   myfile << " " << "PDG:\t\t" << "Total:\t\t"  << "Single:\t\t" << "Double:\t\t" << "More: \n" ;
-   for(std::vector<long int>::size_type z=0; z<pdg_num.size(); ++z) {  
-     myfile << " " << pdg_num[z] << "\t\t:" << pdg_count[z] << "\t\t:" << pdg_single[z] << "\t\t:" << pdg_double[z] << "\t\t:" << pdg_other[z] << "\n" ;}
-   myfile << "\n" << "Total number of particles        :" << counter << "\n";;
-   myfile << "Total number of particles (check):" << std::accumulate(pdg_count.begin(), pdg_count.end(), 0) << "\n";;
-   myfile << "Total number of e+e- events      :" << _lept_pairs << "\n";;
-   myfile << "Total number of 2 photon events  :" << _phot_pairs << "\n";;
+   myfile << std::setw(10) << "Particle:" << std::setw(15) << "PDG:" << std::setw(10) << "Total:" << std::setw(10) << "Single:" << std::setw(10) << "Double:" << std::setw(10) << "More:" << " \n" ;
+   for(std::vector<long int>::size_type z=0; z<pdg_num.size(); ++z) {
+     if (pdg_num[z] < 10000) {
+       TParticlePDG * p = db->GetParticle(pdg_num[z]);
+       myfile << std::setw(10) << p->GetName() << std::setw(15) << pdg_num[z] << std::setw(10) << pdg_count[z] << std::setw(10) << pdg_single[z] << std::setw(10) << pdg_double[z] << std::setw(10) << pdg_other[z] << "\n" ;}
+     else {
+       myfile << std::setw(10) << "Nuclei"  << std::setw(15) << pdg_num[z] << std::setw(10) << pdg_count[z] << std::setw(10) << pdg_single[z] << std::setw(10) << pdg_double[z] << std::setw(10) << pdg_other[z] << "\n" ;}
+   }  
+   myfile << "\n" << "Total number of particles         :" << counter << "\n";
+   myfile << "Total number of particles (check) :" << std::accumulate(pdg_count.begin(), pdg_count.end(), 0) << "\n\n";
+   myfile << "Total number of events w/ at least:"  <<  "\n";
+   myfile << "2 photons: " << _phot_pairs << "\n";
+   myfile << "e+ and e-: " << _lept_pairs << "\n";
    myfile.close();
 
   // art::Handle<std::vector<simb::MCParticle>> mcp_h;
