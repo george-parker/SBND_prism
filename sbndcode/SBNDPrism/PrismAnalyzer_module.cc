@@ -67,17 +67,15 @@ private:
   TTree* _tree;
 
   int _run, _subrun, _event;
-  
-  //trial
+
   float _nu_e; ///< Neutrino energy
-  long int _nu_pdg; ///< Neutrino PDG code
+  int _nu_pdg; ///< Neutrino PDG code
   int _nu_ccnc; ///< 0: CC, 1: NC
   int _nu_mode; ///< Neutrino interaction mode
   int _nu_int_type; ///< Neutrino interaction type
   float _nu_vtx_x; ///< Neutrino vertex X
   float _nu_vtx_y; ///< Neutrino vertex Y
   float _nu_vtx_z; ///< Neutrino vertex Z
-  float _nu_vtx_t; ///< Neutrino vertex T
   float _nu_px; ///< Neutrino momentum along X
   float _nu_py; ///< Neutrino momentum along Y
   float _nu_pz; ///< Neutrino momentum along Z
@@ -85,45 +83,19 @@ private:
   float _nu_roaa; ///< Real Off-Axis Angle (angle between neutrino parent p and neutrino p)
   float _nu_l; ///< L [cm]: Distance the neutrino travelled from production to interaction point
   int _nu_decay; ///< Neutrino parent decay type (see dkproc_t in dk2nu)
- 
   float _nu_lepton_e; ///< Final state lepton energy
   float _nu_lepton_px; ///< Final state lepton px
   float _nu_lepton_py; ///< Final state lepton py
   float _nu_lepton_pz; ///< Final state lepton pz
-
-  float _nu_electron_e; ///< Final state electron energy
-  float _nu_electron_px; ///< Final state electron px
-  float _nu_electron_py; ///< Final state electron py
-  float _nu_electron_pz; ///< Final state electron pz
-
-  float _nu_positron_e; ///< Final state positron energy
-  float _nu_positron_px; ///< Final state positron px
-  float _nu_positron_py; ///< Final state positron py
-  float _nu_positron_pz; ///< Final state positron pz
-
-  float _nu_photon1_e; ///< Final state photon energy
-  float _nu_photon1_px; ///< Final state photon px
-  float _nu_photon1_py; ///< Final state photon py
-  float _nu_photon1_pz; ///< Final state photon pz
-
-  float _nu_photon2_e; ///< Final state photon energy
-  float _nu_photon2_px; ///< Final state photon px
-  float _nu_photon2_py; ///< Final state photon py
-  float _nu_photon2_pz; ///< Final state photon pz
-
-  float _opening_angle; ///<Opening angle of electron-positron
-
+  float _nu_lepton_angle; ///< Final state lepton angle
+  float _nu_pi0_e; ///< Final state pi0 energy
+  float _nu_pi0_px; ///< Final state pi0 px
+  float _nu_pi0_py; ///< Final state pi0 py
+  float _nu_pi0_pz; ///< Final state pi0 pz
+  float _nu_pi0_angle; ///< Final state pi0 angle
   float _nu_e_reco; ///< Neutrino reconstructe energy using QE formula
-  std::vector<long int> _pars_pdg; ///< All other particles produced - pdg code
+  std::vector<int> _pars_pdg; ///< All other particles produced - pdg code
   std::vector<float> _pars_e; ///< All other particles produced - energy
-
-  std::vector<long int> pdg_num; ///< particles produced - pdg code
-  std::vector<long int> pdg_count; ///<  particles produced - pdg count
-  std::vector<long int> pdg_row; ///< particles produced 
-  std::vector<long int> pdg_single; ///<  particles produced
-  std::vector<long int> pdg_double; ///< particles produced
-  std::vector<long int> pdg_other; ///<  particles produced
-  int counter;
 
   float _nu_prod_vtx_x; ///< Neutrino production vertex in detector coordinates
   float _nu_prod_vtx_y; ///< Neutrino production vertex in detector coordinates
@@ -140,9 +112,6 @@ private:
   int _nu_pip_mult; ///< Pi0 multiplicity
   int _nu_pi0_mult; ///< Pi plus multiplicity
   int _nu_p_mult; ///< Proton multiplicity
-  
-  int _lept_pairs;
-  int _phot_pairs;
 
   TTree* _sr_tree;
   int _sr_run, _sr_subrun;
@@ -154,12 +123,8 @@ private:
 
 PrismAnalyzer::PrismAnalyzer(fhicl::ParameterSet const& p)
   : EDAnalyzer{p}  // ,
-  // More initializers here.
+// More initializers here.
 {
-
-  _phot_pairs = 0;
-  _lept_pairs = 0;
-  counter = 0;
 
   _beam_origin_x = p.get<float>("BeamCenterX");
   _beam_origin_y = p.get<float>("BeamCenterY");
@@ -180,10 +145,9 @@ PrismAnalyzer::PrismAnalyzer(fhicl::ParameterSet const& p)
   _tree->Branch("nu_vtx_x", &_nu_vtx_x, "nu_vtx_x/F");
   _tree->Branch("nu_vtx_y", &_nu_vtx_y, "nu_vtx_y/F");
   _tree->Branch("nu_vtx_z", &_nu_vtx_z, "nu_vtx_z/F");
-  _tree->Branch("nu_vtx_t", &_nu_vtx_t, "nu_vtx_t/F");
   _tree->Branch("nu_px", &_nu_px, "nu_px/F");
-  _tree->Branch("nu_py", &_nu_py, "nu_py/F");
-  _tree->Branch("nu_pz", &_nu_pz, "nu_pz/F");
+  _tree->Branch("nu_py", &_nu_py, "nu_px/F");
+  _tree->Branch("nu_pz", &_nu_pz, "nu_px/F");
   _tree->Branch("nu_oaa", &_nu_oaa, "nu_oaa/F");
   _tree->Branch("nu_roaa", &_nu_roaa, "nu_roaa/F");
   _tree->Branch("nu_l", &_nu_l, "nu_l/F");
@@ -192,29 +156,12 @@ PrismAnalyzer::PrismAnalyzer(fhicl::ParameterSet const& p)
   _tree->Branch("nu_lepton_px", &_nu_lepton_px, "nu_lepton_px/F");
   _tree->Branch("nu_lepton_py", &_nu_lepton_py, "nu_lepton_py/F");
   _tree->Branch("nu_lepton_pz", &_nu_lepton_pz, "nu_lepton_pz/F");
-
-  _tree->Branch("opening_angle", &_opening_angle, "opening_angle/F");
-
-  _tree->Branch("nu_electron_e", &_nu_electron_e, "nu_electron_e/F");
-  _tree->Branch("nu_electron_px", &_nu_electron_px, "nu_electron_px/F");
-  _tree->Branch("nu_electron_py", &_nu_electron_py, "nu_electron_py/F");
-  _tree->Branch("nu_electron_pz", &_nu_electron_pz, "nu_electron_pz/F");
-
-  _tree->Branch("nu_positron_e", &_nu_positron_e, "nu_positron_e/F");
-  _tree->Branch("nu_positron_px", &_nu_positron_px, "nu_positron_px/F");
-  _tree->Branch("nu_positron_py", &_nu_positron_py, "nu_positron_py/F");
-  _tree->Branch("nu_positron_pz", &_nu_positron_pz, "nu_positron_pz/F");
-
-  _tree->Branch("nu_photon1_e", &_nu_photon1_e, "nu_photon1_e/F");
-  _tree->Branch("nu_photon1_px", &_nu_photon1_px, "nu_photon1_px/F");
-  _tree->Branch("nu_photon1_py", &_nu_photon1_py, "nu_photon1_py/F");
-  _tree->Branch("nu_photon1_pz", &_nu_photon1_pz, "nu_photon1_pz/F");
-
-  _tree->Branch("nu_photon2_e", &_nu_photon2_e, "nu_photon2_e/F");
-  _tree->Branch("nu_photon2_px", &_nu_photon2_px, "nu_photon2_px/F");
-  _tree->Branch("nu_photon2_py", &_nu_photon2_py, "nu_photon2_py/F");
-  _tree->Branch("nu_photon2_pz", &_nu_photon2_pz, "nu_photon2_pz/F");
-
+  _tree->Branch("nu_lepton_angle", &_nu_lepton_angle, "nu_lepton_angle/F");
+  _tree->Branch("nu_pi0_e", &_nu_pi0_e, "nu_pi0_e/F");
+  _tree->Branch("nu_pi0_px", &_nu_pi0_px, "nu_pi0_px/F");
+  _tree->Branch("nu_pi0_py", &_nu_pi0_py, "nu_pi0_py/F");
+  _tree->Branch("nu_pi0_pz", &_nu_pi0_pz, "nu_pi0_pz/F");
+  _tree->Branch("nu_pi0_angle", &_nu_pi0_angle, "nu_pi0_angle/F");
   _tree->Branch("nu_e_reco", &_nu_e_reco, "nu_e_reco/F");
 
   _tree->Branch("nu_prod_vtx_x", &_nu_prod_vtx_x, "nu_prod_vtx_x/F");
@@ -224,7 +171,7 @@ PrismAnalyzer::PrismAnalyzer(fhicl::ParameterSet const& p)
   _tree->Branch("nu_prod_vtx_y_beam", &_nu_prod_vtx_y_beam, "nu_prod_vtx_y_beam/F");
   _tree->Branch("nu_prod_vtx_z_beam", &_nu_prod_vtx_z_beam, "nu_prod_vtx_z_beam/F");
 
-  _tree->Branch("pars_pdg", "std::vector<long int>", &_pars_pdg);
+  _tree->Branch("pars_pdg", "std::vector<int>", &_pars_pdg);
   _tree->Branch("pars_e", "std::vector<float>", &_pars_e);
 
   _tree->Branch("p_type", &_p_type, "p_type/I");
@@ -267,10 +214,9 @@ void PrismAnalyzer::analyze(art::Event const& e)
   //
   art::FindManyP<simb::MCFlux> mct_to_mcf (mct_h, e, _mctruth_producer);
 
-  // _pars_pdg.clear();
-  //_pars_e.clear();
+  _pars_pdg.clear();
+  _pars_e.clear();
   _nu_pi0_mult = _nu_pip_mult = _nu_p_mult = 0;
-  //counter = 0;
 
   //
   // Loop over the neutrino interactions in this event
@@ -288,7 +234,6 @@ void PrismAnalyzer::analyze(art::Event const& e)
     _nu_vtx_x = mct_v[i]->GetNeutrino().Nu().Vx();
     _nu_vtx_y = mct_v[i]->GetNeutrino().Nu().Vy();
     _nu_vtx_z = mct_v[i]->GetNeutrino().Nu().Vz();
-    _nu_vtx_t = mct_v[i]->GetNeutrino().Nu().T();
     _nu_px = mct_v[i]->GetNeutrino().Nu().Px();
     _nu_py = mct_v[i]->GetNeutrino().Nu().Py();
     _nu_pz = mct_v[i]->GetNeutrino().Nu().Pz();
@@ -329,186 +274,41 @@ void PrismAnalyzer::analyze(art::Event const& e)
     _nu_lepton_pz = -9999;
     _nu_e_reco = -9999;
 
-    _nu_electron_e = -9999;
-    _nu_electron_px = -9999;
-    _nu_electron_py = -9999;
-    _nu_electron_pz = -9999;
-
-    _nu_positron_e = -9999;
-    _nu_positron_px = -9999;
-    _nu_positron_py = -9999;
-    _nu_positron_pz = -9999;
-
-    _nu_photon1_e = -9999;
-    _nu_photon1_px = -9999;
-    _nu_photon1_py = -9999;
-    _nu_photon1_pz = -9999;
-
-    _nu_photon2_e = -9999;
-    _nu_photon2_px = -9999;
-    _nu_photon2_py = -9999;
-    _nu_photon2_pz = -9999;
-
-    float electron_e = -9999;
-    float electron_px = -9999;
-    float electron_py = -9999;
-    float electron_pz = -9999;
-
-    float positron_e = -9999;
-    float positron_px = -9999;
-    float positron_py = -9999;
-    float positron_pz = -9999;
-
-    float photon1_e = -9999;
-    float photon1_px = -9999;
-    float photon1_py = -9999;
-    float photon1_pz = -9999;
-
-    float photon2_e = -9999;
-    float photon2_px = -9999;
-    float photon2_py = -9999;
-    float photon2_pz = -9999;
+    _nu_pi0_e = -9999;
+    _nu_pi0_px = -9999;
+    _nu_pi0_py = -9999;
+    _nu_pi0_pz = -9999;
     
-    int _positron = 0;
-    int _electron = 0;
 
     for (int p = 0; p < mct_v[i]->NParticles(); p++) {
       auto const & mcp = mct_v[i]->GetParticle(p);
-      
+
       if (mcp.StatusCode() != 1) continue;
-
-      if (std::find(pdg_num.begin(), pdg_num.end(), mcp.PdgCode()) ==pdg_num.end()) {
-	// someName not in name, add it
-	pdg_num.push_back(mcp.PdgCode());
-	pdg_count.push_back(0);
-	pdg_row.push_back(0);
-	pdg_single.push_back(0);
-	pdg_double.push_back(0);
-	pdg_other.push_back(0);
-      }
-
-      //std::vector<long int>::iterator it = std::find(pdg_num.begin(), pdg_num.end(), mcp.PdgCode());       
-      //std::find(pdg_num.begin(), pdg_num.end(), mcp.PdgCode());
-      //std::cout << "The index is at:" << std::find(pdg_num.begin(), pdg_num.end(), mcp.PdgCode()) - pdg_num.begin() << std::endl;
-      pdg_count[std::find(pdg_num.begin(), pdg_num.end(), mcp.PdgCode()) - pdg_num.begin()]++;
-      pdg_row[std::find(pdg_num.begin(), pdg_num.end(), mcp.PdgCode()) - pdg_num.begin()]++;
-      //pdg_num.push_back(mcp.PdgCode());
 
       _pars_pdg.push_back(mcp.PdgCode());
       _pars_e.push_back(mcp.E());
 
       if (mcp.PdgCode() == 111) {
+	_nu_pi0_e = mcp.E();
+        _nu_pi0_px = mcp.Px();
+        _nu_pi0_py = mcp.Py();
+        _nu_pi0_pz = mcp.Pz();
+        _nu_pi0_angle = TVector3(_nu_pi0_px, _nu_pi0_py, _nu_pi0_pz).Angle(TVector3(0, 0, 1));
         _nu_pi0_mult++;
-	
       } else if (std::abs(mcp.PdgCode()) == 211) {
         _nu_pip_mult++;
       }
-      else if (mcp.PdgCode() == 22) {
-	//_phot_pairs++;
-	//std::cout << "Photon:" << _phot_pairs << std::endl;
-	
-        if (photon1_e == -9999) {
-	  photon1_e = mcp.E();
-          photon1_px = mcp.Px();
-	  photon1_py = mcp.Py();
-	  photon1_pz = mcp.Pz(); }
-	else {
-	  photon2_e = mcp.E();
-          photon2_px = mcp.Px();
-          photon2_py = mcp.Py();
-          photon2_pz = mcp.Pz(); 
-
-	  _nu_photon1_e = photon1_e;
-	  _nu_photon1_px = photon1_px;
-	  _nu_photon1_py = photon1_py;
-	  _nu_photon1_pz = photon1_pz;
-
-	  _nu_photon2_e = photon2_e;
-	  _nu_photon2_px = photon2_px;
-	  _nu_photon2_py = photon2_py;
-	  _nu_photon2_pz = photon2_pz;
-	  
-	  _phot_pairs++;
-	  //std::cout << "Photon pairs is:" << _phot_pairs << std::endl;
-	}
-      } 
-
-
       else if (std::abs(mcp.PdgCode()) == 2112) {
-	_nu_p_mult++;
-      } else if (std::abs(mcp.PdgCode()) == 13 || std::abs(mcp.PdgCode()) == 11) {
+        _nu_p_mult++;
+      } else if (std::abs(mcp.PdgCode()) == 11) {
         _nu_lepton_e = mcp.E();
         _nu_lepton_px = mcp.Px();
         _nu_lepton_py = mcp.Py();
         _nu_lepton_pz = mcp.Pz();
+	_nu_lepton_angle = TVector3(_nu_lepton_px, _nu_lepton_py, _nu_lepton_pz).Angle(TVector3(0, 0, 1));
         _nu_e_reco = GetEnergyQE(mcp.E(), mcp.Px(), mcp.Py(), mcp.Pz());
-
-	if (mcp.PdgCode()  == 11) {
-	  _electron = 1;
-  
-	  electron_e = mcp.E();
-	  electron_px = mcp.Px();
-	  electron_py = mcp.Py();
-	  electron_pz = mcp.Pz();
-	  
-	  if (_positron == 1) {
-
-	    _nu_electron_e = electron_e;
-	    _nu_electron_px = electron_px;
-	    _nu_electron_py = electron_py;
-	    _nu_electron_pz = electron_pz;
-
-	    _nu_positron_e = positron_e;
-	    _nu_positron_px = positron_px;
-	    _nu_positron_py = positron_py;
-	    _nu_positron_pz = positron_pz;
-	    
-	    _lept_pairs++;
-	    //std::cout << "Number of positrons:" << _lept_pairs << std::endl;
-	    _opening_angle = std::acos((_nu_electron_px * _nu_positron_px + _nu_electron_py * _nu_positron_py + _nu_electron_pz * _nu_positron_pz)/(std::sqrt(_nu_electron_px * _nu_electron_px + _nu_electron_py * _nu_electron_py + _nu_electron_pz * _nu_electron_pz)*std::sqrt(_nu_positron_px * _nu_positron_px + _nu_positron_py * _nu_positron_py + _nu_positron_pz * _nu_positron_pz)));
-	  }
-        }
-
-        if (mcp.PdgCode()  == -11) {
-	  _positron = 1;
-
-	  //std::cout << "Number of positrons:" << _lept_pairs << std::endl;
-
-          positron_e = mcp.E();
-          positron_px = mcp.Px();
-          positron_py = mcp.Py();
-          positron_pz = mcp.Pz();
-	  
-	  if (_electron == 1) {
-
-            _nu_electron_e = electron_e;
-            _nu_electron_px = electron_px;
-            _nu_electron_py = electron_py;
-            _nu_electron_pz = electron_pz;
-
-            _nu_positron_e = positron_e;
-            _nu_positron_px = positron_px;
-            _nu_positron_py = positron_py;
-            _nu_positron_pz = positron_pz;
-
-	    _lept_pairs++;
-	    //std::cout << "Number of e+e- pairs is:" << _lept_pairs << std::endl;
-	    _opening_angle = std::acos((_nu_electron_px * _nu_positron_px + _nu_electron_py * _nu_positron_py + _nu_electron_pz * _nu_positron_pz)/(std::sqrt(_nu_electron_px * _nu_electron_px + _nu_electron_py * _nu_electron_py + _nu_electron_pz * _nu_electron_pz)*std::sqrt(_nu_positron_px * _nu_positron_px + _nu_positron_py * _nu_positron_py + _nu_positron_pz * _nu_positron_pz)));
-
-          }
-	  //_positron.push_back(p);
-        }
       }
-
-      //for (int x = 0; x < (int)_electron.size(); x++) {
-      //auto const & mcp_e = mct_v[i]->GetParticle(_electron[x]);
-      //for (int y = 0; y < (int)_positron.size(); y++) {
-      // auto const & mcp_p = mct_v[i]->GetParticle(_positron[y]);
-      // if (mcp_e->Mother() == mcp_p->Mother()) {
-      // _nu_electron_e = mcp_e.E();
-      //_nu_positron_e = mcp_p.E();}}}
     }
- 
 
     // _n_pi0 = 0;
     // for (int p = 0; p < mct_v[i]->NParticles(); p++) {
@@ -525,38 +325,7 @@ void PrismAnalyzer::analyze(art::Event const& e)
     // }
 
     _tree->Fill();
-
-    for(std::vector<long int>::size_type y=0; y<pdg_row.size(); ++y) {
-      if (pdg_row[y] == 1) {
-        pdg_single[y]++;}
-      else if (pdg_row[y] == 2) {
-	pdg_double[y]++;}
-      else if (pdg_row[y] > 2) {
-        pdg_other[y]++;}
-    }
-    counter += std::accumulate(pdg_row.begin(), pdg_row.end(), 0);
-    std::fill(pdg_row.begin(), pdg_row.end(), 0);
   }
-  
-
-  TDatabasePDG *db   = TDatabasePDG::Instance();
-
-   std::ofstream myfile;
-   myfile.open("pdg.txt");
-   myfile << std::setw(10) << "Particle:" << std::setw(15) << "PDG:" << std::setw(10) << "Total:" << std::setw(10) << "Single:" << std::setw(10) << "Double:" << std::setw(10) << "More:" << " \n" ;
-   for(std::vector<long int>::size_type z=0; z<pdg_num.size(); ++z) {
-     if (pdg_num[z] < 10000) {
-       TParticlePDG * p = db->GetParticle(pdg_num[z]);
-       myfile << std::setw(10) << p->GetName() << std::setw(15) << pdg_num[z] << std::setw(10) << pdg_count[z] << std::setw(10) << pdg_single[z] << std::setw(10) << pdg_double[z] << std::setw(10) << pdg_other[z] << "\n" ;}
-     else {
-       myfile << std::setw(10) << "Nuclei"  << std::setw(15) << pdg_num[z] << std::setw(10) << pdg_count[z] << std::setw(10) << pdg_single[z] << std::setw(10) << pdg_double[z] << std::setw(10) << pdg_other[z] << "\n" ;}
-   }  
-   myfile << "\n" << "Total number of particles         :" << counter << "\n";
-   myfile << "Total number of particles (check) :" << std::accumulate(pdg_count.begin(), pdg_count.end(), 0) << "\n\n";
-   myfile << "Total number of events w/ at least:"  <<  "\n";
-   myfile << "2 photons: " << _phot_pairs << "\n";
-   myfile << "e+ and e-: " << _lept_pairs << "\n";
-   myfile.close();
 
   // art::Handle<std::vector<simb::MCParticle>> mcp_h;
   // e.getByLabel("largeant", mcp_h);
@@ -639,19 +408,6 @@ void PrismAnalyzer::endSubRun(art::SubRun const& sr) {
 }
 
 DEFINE_ART_MODULE(PrismAnalyzer)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
