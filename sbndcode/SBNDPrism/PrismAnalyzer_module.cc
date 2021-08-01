@@ -87,6 +87,17 @@ private:
   float _nu_lepton_px; ///< Final state lepton px
   float _nu_lepton_py; ///< Final state lepton py
   float _nu_lepton_pz; ///< Final state lepton pz
+
+  float _nu_electron_e; ///< Final state lepton energy
+  float _nu_electron_px; ///< Final state lepton px
+  float _nu_electron_py; ///< Final state lepton py
+  float _nu_electron_pz; ///< Final state lepton pz
+
+  float _nu_positron_e; ///< Final state lepton energy
+  float _nu_positron_px; ///< Final state lepton px
+  float _nu_positron_py; ///< Final state lepton py
+  float _nu_positron_pz; ///< Final state lepton pz
+
   float _nu_lepton_angle; ///< Final state lepton angle
   float _nu_pi0_e; ///< Final state pi0 energy
   float _nu_pi0_px; ///< Final state pi0 px
@@ -109,9 +120,18 @@ private:
   float _p_dpy; ///< Neutrino parent py at neutrino production vertex
   float _p_dpz; ///< Neutrino parent pz at neutrino production vertex
 
+  int _cpi_mult; ///< All other particles produced
+  int _pro_mult; ///< All other particles produced
+  std::vector<int> p_index;
+  std::vector<int> e_index;
+  std::vector<int> cpi_index;
+  std::vector<int> pro_index;
+
   int _nu_pip_mult; ///< Pi0 multiplicity
   int _nu_pi0_mult; ///< Pi plus multiplicity
   int _nu_p_mult; ///< Proton multiplicity
+
+  //int photon = 0; 
 
   TTree* _sr_tree;
   int _sr_run, _sr_subrun;
@@ -157,6 +177,17 @@ PrismAnalyzer::PrismAnalyzer(fhicl::ParameterSet const& p)
   _tree->Branch("nu_lepton_py", &_nu_lepton_py, "nu_lepton_py/F");
   _tree->Branch("nu_lepton_pz", &_nu_lepton_pz, "nu_lepton_pz/F");
   _tree->Branch("nu_lepton_angle", &_nu_lepton_angle, "nu_lepton_angle/F");
+
+
+  _tree->Branch("nu_electron_e", &_nu_electron_e, "nu_electron_e/F");
+  _tree->Branch("nu_electron_px", &_nu_electron_px, "nu_electron_px/F");
+  _tree->Branch("nu_electron_py", &_nu_electron_py, "nu_electron_py/F");
+  _tree->Branch("nu_electron_pz", &_nu_electron_pz, "nu_electron_pz/F");
+  _tree->Branch("nu_positron_e", &_nu_positron_e, "nu_positron_e/F");
+  _tree->Branch("nu_positron_px", &_nu_positron_px, "nu_positron_px/F");
+  _tree->Branch("nu_positron_py", &_nu_positron_py, "nu_positron_py/F");
+  _tree->Branch("nu_positron_pz", &_nu_positron_pz, "nu_positron_pz/F");
+
   _tree->Branch("nu_pi0_e", &_nu_pi0_e, "nu_pi0_e/F");
   _tree->Branch("nu_pi0_px", &_nu_pi0_px, "nu_pi0_px/F");
   _tree->Branch("nu_pi0_py", &_nu_pi0_py, "nu_pi0_py/F");
@@ -182,6 +213,9 @@ PrismAnalyzer::PrismAnalyzer(fhicl::ParameterSet const& p)
   _tree->Branch("nu_pip_mult", &_nu_pip_mult, "nu_pip_mult/I");
   _tree->Branch("nu_pi0_mult", &_nu_pi0_mult, "nu_pi0_mult/I");
   _tree->Branch("nu_p_mult", &_nu_p_mult, "nu_p_mult/I");
+
+  _tree->Branch("cpi_mult", &_cpi_mult, "cpi_mult/I");
+  _tree->Branch("pro_mult", &_pro_mult, "pro_mult/I");
 
   _sr_tree = fs->make<TTree>("pottree","");
   _sr_tree->Branch("run", &_sr_run, "run/I");
@@ -295,10 +329,10 @@ void PrismAnalyzer::analyze(art::Event const& e)
         _nu_pi0_pz = mcp.Pz();
         _nu_pi0_angle = TVector3(_nu_pi0_px, _nu_pi0_py, _nu_pi0_pz).Angle(TVector3(0, 0, 1));
         _nu_pi0_mult++;
-      } else if (std::abs(mcp.PdgCode()) == 211) {
+      } else if ((std::abs(mcp.PdgCode()) == 211) && (mcp.E() > 0.01)) {
         _nu_pip_mult++;
       }
-      else if (std::abs(mcp.PdgCode()) == 2112) {
+      else if ((std::abs(mcp.PdgCode()) == 2112) && (mcp.E() >  0.05)) {
         _nu_p_mult++;
       } else if (std::abs(mcp.PdgCode()) == 11) {
         _nu_lepton_e = mcp.E();
@@ -327,26 +361,124 @@ void PrismAnalyzer::analyze(art::Event const& e)
     _tree->Fill();
   }
 
-  // art::Handle<std::vector<simb::MCParticle>> mcp_h;
-  // e.getByLabel("largeant", mcp_h);
-  // if(!mcp_h.isValid()){
-  //   std::cout << "MCParticle product not found..." << std::endl;
-  //   throw std::exception();
-  // }
-  // std::vector<art::Ptr<simb::MCParticle>> mcp_v;
-  // art::fill_ptr_vector(mcp_v, mcp_h);
-  // for (size_t p = 0; p < mcp_v.size(); p++) {
-  //   auto mcp = mcp_v[p];
-  //   if (mcp->StatusCode() != 1) continue;
-  //   if (mcp->Mother() != 1) continue;
-  //   std::cout << "MCParticle " << p
-  //             << ", trackid " << mcp->TrackId()
-  //             << ", pdg " << mcp->PdgCode()
-  //             << ", E " << mcp->E()
-  //             << ", mother " << mcp->Mother()
-  //             << ", process " << mcp->Process() << std::endl;
-  // }
+   art::Handle<std::vector<simb::MCParticle>> mcp_h;
+   e.getByLabel("largeant", mcp_h);
+   if(!mcp_h.isValid()){
+     std::cout << "MCParticle product not found..." << std::endl;
+     throw std::exception();
+   }
+   std::vector<int> pi0_track;
+   std::vector<int> pht_track;
+
+   std::vector<art::Ptr<simb::MCParticle>> mcp_v;
+   art::fill_ptr_vector(mcp_v, mcp_h);
+   for (size_t p = 0; p < mcp_v.size(); p++) {
+     auto mcp = mcp_v[p];
+     if (mcp->StatusCode() != 1) continue;
+       if (mcp->PdgCode() == 111) {
+         pi0_track.push_back(mcp->TrackId()); 
+	}
+   }   
+
+
+   for (size_t p = 0; p < mcp_v.size(); p++) {
+     auto mcp = mcp_v[p];
+     if (mcp->StatusCode() != 1) continue;
+     for (size_t j = 0; j < pi0_track.size(); j++) {
+       if ((mcp->Mother() == pi0_track[j]) && (mcp->PdgCode() == 22)){
+	 pht_track.push_back(mcp->TrackId());
+       }
+     }
+   }
+   
+   std::vector<art::Ptr<simb::MCParticle>> lepton;
+   int electron_m = -9999;
+   int positron_m = -9999;
+
+   float electron_e = -9999;
+   float electron_px = -9999;
+   float electron_py = -9999;
+   float electron_pz = -9999;
+   
+   float positron_e = -9999;
+   float positron_px = -9999;
+   float positron_py = -9999;
+   float positron_pz = -9999;
+
+   //std::vector<art::Ptr<simb::MCParticle>> electron;
+   //std::vector<art::Ptr<simb::MCParticle>> positron;
+   //std::vector<int> p_index;
+   //std::vector<int> e_index;
+   //int p_i = -9999;
+   //int e_i = -9999;
+
+   for (size_t p = 0; p < mcp_v.size(); p++) {
+     auto mcp = mcp_v[p];
+     if (mcp->StatusCode() != 1) continue;
+     for (size_t l = 0; l < pht_track.size(); l++) {
+       if ((mcp->Mother() == pht_track[l]) && (mcp->Process() == "conv")) {
+	 lepton.push_back(mcp);
+	 if (mcp->PdgCode() == -11) {
+	   positron_m = mcp->Mother();
+	   positron_e = mcp->E();
+	   positron_px = mcp->Px();
+	   positron_py = mcp->Py();
+	   positron_pz = mcp->Pz();
+	   }
+
+	 if (mcp->PdgCode() == 11) {
+           electron_m = mcp->Mother();
+           electron_e = mcp->E();
+           electron_px = mcp->Px();
+	   electron_py = mcp->Py();
+           electron_pz = mcp->Pz();
+	   }
+
+	 if ((positron_m != -9999) && (electron_m != -9999) && (positron_m == electron_m)) {
+	   /*std::cout << positron_m << " | " << electron_m << std::endl;
+	   std::cout << positron_e << " | " << electron_e << std::endl;
+	   std::cout << positron_px << " | " << electron_px << std::endl;
+	   std::cout << positron_py << " | " << electron_py << std::endl;
+	   std::cout << positron_pz << " | " << electron_pz << std::endl;
+	   std::cout << p_i << " | " << e_i << std::endl;
+	   std::cout << "proton mult " << _nu_p_mult << std::endl << std::endl;
+	   */
+	   _nu_electron_e = electron_e;
+	   _nu_electron_px = electron_px;
+	   _nu_electron_py = electron_py;
+	   _nu_electron_pz = electron_pz;
+
+	   _nu_positron_e = positron_e;
+	   _nu_positron_px = positron_px;
+	   _nu_positron_py = positron_py;
+	   _nu_positron_pz = positron_pz;
+
+	   _cpi_mult = _nu_pip_mult;
+	   _pro_mult = _nu_p_mult;
+
+	   _tree->Fill();
+	   }
+	   /* 
+	   p_index.push_back(p_i);
+	   e_index.push_back(e_i);
+	   cpi_index.push_back(_nu_pip_mult)
+	   pro_index.push_back(_nu_p_mult);
+	   */
+         }
+       }
+     }
+   /*
+
+   for (size_t n = 0; n < 
+      	   std::cout <<   "MCParticle " << p
+	   << ", trackid " << mcp->TrackId()
+	   << ", pdg " << mcp->PdgCode()
+	   << ", E " << mcp->E()
+	   << ", mother " << mcp->Mother()
+	   << ", process " << mcp->Process() << std::endl;
+   */
 }
+
 
 float PrismAnalyzer::GetOffAxisAngle(float x, float y, float z) {
   TVector3 nu_vtx(x, y, z);
