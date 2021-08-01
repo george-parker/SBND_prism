@@ -92,12 +92,26 @@ private:
   float _nu_electron_px; ///< Final state lepton px
   float _nu_electron_py; ///< Final state lepton py
   float _nu_electron_pz; ///< Final state lepton pz
+  
+  float _vtx_x; ///< Final state lepton px
+  float _vtx_y; ///< Final state lepton py
+  float _vtx_z; ///< Final state lepton pz
 
+  float _displace_vtx; ///< Displaced vertex
+  /*
+  float _e_end_x; ///< Final state lepton px
+  float _e_end_y; ///< Final state lepton py
+  float _e_end_z; ///< Final state lepton pz
+
+  loat _p_end_x; ///< Final state lepton px
+  float _p_end_y; ///< Final state lepton py
+  float _p_end_z; ///< Final state lepton pz
+  */
   float _nu_positron_e; ///< Final state lepton energy
   float _nu_positron_px; ///< Final state lepton px
   float _nu_positron_py; ///< Final state lepton py
   float _nu_positron_pz; ///< Final state lepton pz
-
+  
   float _nu_lepton_angle; ///< Final state lepton angle
   float _nu_pi0_e; ///< Final state pi0 energy
   float _nu_pi0_px; ///< Final state pi0 px
@@ -188,6 +202,24 @@ PrismAnalyzer::PrismAnalyzer(fhicl::ParameterSet const& p)
   _tree->Branch("nu_positron_py", &_nu_positron_py, "nu_positron_py/F");
   _tree->Branch("nu_positron_pz", &_nu_positron_pz, "nu_positron_pz/F");
 
+  _tree->Branch("vtx_x", &_vtx_x, "vtx_x/F");
+  _tree->Branch("vtx_y", &_vtx_y, "vtx_y/F");
+  _tree->Branch("vtx_z", &_vtx_z, "vtx_z/F");
+
+  _tree->Branch("displace_vtx", &_displace_vtx, "displace_vtx/F");
+  /*
+  _tree->Branch("p_x", &_p_x, "p_x/F");
+  _tree->Branch("p_y", &_p_y, "p_y/F");
+  _tree->Branch("p_z", &_p_z, "p_z/F");
+
+  _tree->Branch("e_end_x", &_e_end_x, "e_end_x/F");
+  _tree->Branch("e_end_y", &_e_end_y, "e_end_y/F");
+  _tree->Branch("e_end_z", &_e_end_z, "e_end_z/F");
+
+  _tree->Branch("p_end_x", &_p_end_x, "p_end_x/F");
+  _tree->Branch("p_end_y", &_p_end_y, "p_end_y/F");
+  _tree->Branch("p_end_z", &_p_end_z, "p_end_z/F");
+  */
   _tree->Branch("nu_pi0_e", &_nu_pi0_e, "nu_pi0_e/F");
   _tree->Branch("nu_pi0_px", &_nu_pi0_px, "nu_pi0_px/F");
   _tree->Branch("nu_pi0_py", &_nu_pi0_py, "nu_pi0_py/F");
@@ -404,7 +436,19 @@ void PrismAnalyzer::analyze(art::Event const& e)
    float positron_px = -9999;
    float positron_py = -9999;
    float positron_pz = -9999;
+   
+   float vertex_x = -9999;
+   float vertex_y = -9999;
+   float vertex_z = -9999;
 
+   /*   float electron_end_x = -9999;
+   float electron_end_y = -9999;
+   float electron_end_z = -9999;
+
+   float positron_end_x = -9999;
+   float positron_end_y = -9999;
+   float positron_end_z = -9999;
+   */
    //std::vector<art::Ptr<simb::MCParticle>> electron;
    //std::vector<art::Ptr<simb::MCParticle>> positron;
    //std::vector<int> p_index;
@@ -424,6 +468,10 @@ void PrismAnalyzer::analyze(art::Event const& e)
 	   positron_px = mcp->Px();
 	   positron_py = mcp->Py();
 	   positron_pz = mcp->Pz();
+
+	   vertex_x = mcp->Vx();
+           vertex_y = mcp->Vy();
+           vertex_z = mcp->Vz();
 	   }
 
 	 if (mcp->PdgCode() == 11) {
@@ -437,12 +485,12 @@ void PrismAnalyzer::analyze(art::Event const& e)
 	 if ((positron_m != -9999) && (electron_m != -9999) && (positron_m == electron_m)) {
 	   /*std::cout << positron_m << " | " << electron_m << std::endl;
 	   std::cout << positron_e << " | " << electron_e << std::endl;
-	   std::cout << positron_px << " | " << electron_px << std::endl;
-	   std::cout << positron_py << " | " << electron_py << std::endl;
-	   std::cout << positron_pz << " | " << electron_pz << std::endl;
-	   std::cout << p_i << " | " << e_i << std::endl;
-	   std::cout << "proton mult " << _nu_p_mult << std::endl << std::endl;
-	   */
+	   std::cout << positron_x << " | " << electron_x << std::endl;
+	   std::cout << positron_y << " | " << electron_y << std::endl;
+	   std::cout << positron_z << " | " << electron_z << std::endl;
+	   //std::cout << p_i << " | " << e_i << std::endl;
+	   std::cout << "proton mult " << _nu_p_mult << std::endl << std::endl;*/
+	   
 	   _nu_electron_e = electron_e;
 	   _nu_electron_px = electron_px;
 	   _nu_electron_py = electron_py;
@@ -453,6 +501,24 @@ void PrismAnalyzer::analyze(art::Event const& e)
 	   _nu_positron_py = positron_py;
 	   _nu_positron_pz = positron_pz;
 
+	   _vtx_x = vertex_x;
+	   _vtx_y = vertex_y;
+	   _vtx_z = vertex_z;
+	   
+	   auto d_x = _nu_vtx_x - _vtx_x;
+	   auto d_y = _nu_vtx_y - _vtx_y;
+	   auto d_z = _nu_vtx_z - _vtx_z;
+
+	   _displace_vtx = sqrt(d_x * d_x + d_y * d_y + d_z * d_z);
+	   /*
+	   _e_end_x = electron_x;
+           _e_end_y = electron_y;
+           _e_end_z = electron_z;
+
+           _p_end_x = positron_x;
+           _p_end_y = positron_y;
+           _p_end_z = positron_z;
+	   */
 	   _cpi_mult = _nu_pip_mult;
 	   _pro_mult = _nu_p_mult;
 
